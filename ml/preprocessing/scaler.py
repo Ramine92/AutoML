@@ -34,3 +34,6 @@ class Scaler:
             for col in self.num_cols:
                 X[col] = (X[col]-self.mean_[col])/self.std_[col]
         return X
+    
+    def fit_transform(self,X):
+        return self.fit(X).transform(X)
