@@ -1,6 +1,6 @@
-from preprocessing.imputer import Imputer
-from preprocessing.scaler import Scaler
-from preprocessing.encoder import Encoder
+from ml.preprocessing.imputer import Imputer
+from ml.preprocessing.scaler import Scaler
+from ml.preprocessing.encoder import Encoder
 class Preprocessor:
     
     def __init__(self,cat_cols,num_cols):
@@ -26,7 +26,7 @@ class Preprocessor:
         X = self.imputer.transform(X)
         X = self.scaler.transform(X)
         X = self.encoder.transform(X)
-        return X
+        return X.astype(float)
     
     def fit_transform(self,X):
         return self.fit(X).transform(X)

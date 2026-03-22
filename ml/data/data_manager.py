@@ -16,8 +16,8 @@ class DataManager:
             raise Exception("couldn't find the data passed.")
         self.df = pd.read_csv(file_path)
 
-        self.numerical_cols = (self.df).select_dtypes(exclude="object").columns.tolist()
-        self.categorical_cols = (self.df).select_dtypes(include="object").columns.tolist()
+        self.numerical_cols = [c for c in self.df.select_dtypes(exclude="object").columns if c != self.target_column]
+        self.categorical_cols = [c for c in self.df.select_dtypes(include="object").columns if c != self.target_column]
 
         #check if its a Classification / Regression problem
         if self.target_column not in self.df.columns:

@@ -15,8 +15,9 @@ class Encoder:
     def transform(self,X):
         X = X.copy()
         X = pd.get_dummies(data=X,columns=self.cat_cols)
-        expected_cols = [col for cols in self.categories_[col].values() for col in self.cat_cols]
-        X = X.reindex(columns=expected_cols,fill_value=0)
+        expected_dummy_cols = [dummy_col for cols in self.categories_.values() for dummy_col in cols]
+        non_cat_cols = [c for c in X.columns if c not in expected_dummy_cols and c not in self.cat_cols]
+        X = X.reindex(columns=non_cat_cols + expected_dummy_cols, fill_value=0)
         return X
 
     def fit_transform(self,X):
