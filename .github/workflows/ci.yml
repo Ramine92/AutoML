@@ -1,0 +1,38 @@
+name: Tests autoML Workflow
+on:
+  push:
+      branches: ["main"]
+  pull_request:
+      branches: ["main"]
+    
+permissions: 
+  contents: "read"
+
+jobs:
+    test:
+        name: Run Test & Lint
+        runs-on: ubuntu-latest
+        steps:
+          - name: Checkout Code
+            uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+          
+
+
+          - name: Set up Python 3.13.5
+            uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+            with:
+                python-version: 3.13
+
+          - name: Install Dependencies
+            run: |
+              python -m pip install --upgrade pip
+              pip install -r requirements.txt
+          
+          - name: Run Tests
+            run: pytest tests/ -v
+            env:
+                PYTHONPATH: . #tells Python to look from the project root
+
+            
+
+
