@@ -32,4 +32,4 @@ def test_pipeline():
 
     score = model.score(X_test_clean,y_test)
     print(f"Model score is : {score}")
-    assert  0.0 <= score <= 1.0
+    assert  (0.0 <= score["acc"] <= 1.0) or (0.0 <= score["R2"] <= 1.0)
