@@ -1,5 +1,5 @@
 import numpy as np
-
+from ml.evaluation.metrics import r2_score,root_mean_squared_error,mean_absolute_error,mean_squared_error
 class LinearRegression:
 
     def __init__(self,alpha=0.01,iterations=1000):
@@ -44,8 +44,11 @@ class LinearRegression:
     
     def score(self,X_new,y_true):
         predictions = self.predict(X_new)
-        mse = np.mean((predictions-y_true)**2)
-        return np.sqrt(mse)
+        r2 = r2_score(y_true,predictions)
+        mse = mean_squared_error(y_true,predictions)
+        mae = mean_absolute_error(y_true,predictions)
+        rmse = root_mean_squared_error(y_true,predictions)
+        return {"MSE":mse,"MAE":mae,"RMSE":rmse,"R2":r2}
     
     
 

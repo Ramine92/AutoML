@@ -7,6 +7,7 @@ class AutoMLPipeline:
     def __init__(self,target_column):
         self.target_column = target_column
         self.best_model_ = None # stores the best model 
+        self.metrics_ = {} # stores metrics of each model
     
     def run(self,file_path):
         #loading and spliting data
@@ -24,19 +25,21 @@ class AutoMLPipeline:
                 model = CLASSMODELS()
                 model.fit(X_train_clean,y_train)
                 tmpscore = model.score(X_test_clean,y_test)
-                if tmpscore > score :
+                if tmpscore["R2"] > score :
                     self.best_model_ = model
-                    score = tmpscore
+                    score = tmpscore["R2"]
+                self.metrics_[CLASSMODELS.__name__] = tmpscore
 
         else:
             score = -1
             for CLASSMODELS in CLASSIFICATION_MODELS:
                 model = CLASSMODELS()
-                model.fit(X_train,y_train)
+                model.fit(X_train_clean,y_train)
                 tmpscore = model.score(X_test_clean,y_test)
-                if tmpscore > score:
+                if tmpscore["acc"] > score:
                     self.best_model_ = model
-                    score = tmpscore
+                    score = tmpscore["acc"]
+                self.metrics_[CLASSMODELS.__name__] = tmpscore
         
 
     def predict(self,X_new):
