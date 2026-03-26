@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environment
+ml_project_env/
+
+# MLflow
+mlflow.db
+mlruns/
+
+# OS files
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Uploads and artifacts (generated at runtime)
+ml/data/uploaded/
+ml/data/artifacts/
+
+# Pytest
+.pytest_cache/
