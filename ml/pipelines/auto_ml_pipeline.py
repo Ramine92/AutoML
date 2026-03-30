@@ -1,6 +1,6 @@
 import pandas as pd
 from ml.data.data_manager import DataManager
-from ml.preprocessing import Preprocessor 
+from ml.preprocessing.preprocessor import Preprocessor 
 from ml.models.registry import REGRESSION_MODELS,CLASSIFICATION_MODELS
 import mlflow
 class AutoMLPipeline:

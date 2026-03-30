@@ -5,7 +5,7 @@ from app.services.predictor import predict
 router = APIRouter()
 
 @router.post("/predict")
-async def make_prediction(model_name: str,data: dict):
-    X_new = pd.DataFrame([data])
+async def make_prediction(model_name: str,data: list[dict]):
+    X_new = pd.DataFrame(data)
     prediction = predict(model_name,X_new)
-    return PredictionResponse(prediction=prediction)
+    return PredictionResponse(prediction=prediction.tolist())
