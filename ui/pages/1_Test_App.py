@@ -1,9 +1,17 @@
 import streamlit as st
+import pandas as pd
 import requests
 import json
 st.title("Test AutoML")
 st.header("Upload CSV")
 uploaded_file = st.file_uploader("Choose a CSV file",type="csv")
+if uploaded_file is not None:
+    st.subheader("Data Preview")
+    df_preview = pd.read_csv(uploaded_file)
+    df_preview.reset_index(drop=True,inplace=True)
+    st.dataframe(df_preview.head())
+    uploaded_file.seek(0)
+
 if "best_model_name" not in st.session_state:
     st.session_state.best_model_name = None
 if "trained" not in st.session_state:
@@ -24,9 +32,21 @@ if uploaded_file is not None and target_column:
                 #data persistance using st.session_state
                 st.session_state.trained = True
                 st.session_state.best_model_name = result['best_model']
+                metrics_data = []
                 for model in result["results"]:
-                    st.subheader(model["model"])
-                    st.json(model["metrics"])
+                    row = {"Model":model["model"]}
+                    row.update(model["metrics"])
+                    metrics_data.append(row)
+                    
+                df_metrics = pd.DataFrame(metrics_data)    
+                if not df_metrics.empty:
+                    if "acc" in df_metrics.columns:
+                        st.bar_chart(data=df_metrics, x="Model", y="acc", width=400, use_container_width=False)
+                    elif "R2" in df_metrics.columns:
+                        st.bar_chart(data=df_metrics, x="Model", y="R2", width=400, use_container_width=False)
+                st.write("Raw Metrics")
+                st.dataframe(df_metrics)
+
         except Exception as e:
             st.error(f"Pipeline failed: {e}")
 if st.session_state.trained:
