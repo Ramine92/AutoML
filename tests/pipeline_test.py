@@ -1,6 +1,7 @@
 # pipeline_test.py — sequential smoke test
 from ml.data.data_manager import DataManager
 from ml.preprocessing.preprocessor import Preprocessor
+from sklearn.model_selection import train_test_split
 from ml.models.classification.LogisticRegression import LogisticRegression
 from ml.models.Regression.LinearRegression import LinearRegression
 from app.core.config import BASE_DIR
@@ -12,7 +13,8 @@ def test_pipeline():
     # Step 1: Load data
     manager = DataManager(target_column=target_column)
     df, num_cols, cat_cols, is_classification = manager.load_and_profile(data_path)
-    X_train, X_test, y_train, y_test = manager.get_split()
+    X,y = manager.get_split()
+    X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.2)
     print("Data loaded:", X_train.shape, X_test.shape)
 
     assert (len(X_train) > 80) and (len(X_test) > 20)

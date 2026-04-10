@@ -1,5 +1,6 @@
 import numpy as np
 import copy
+from ml.evaluation.metrics import r2_score,mean_absolute_error,mean_squared_error,root_mean_squared_error
 class Node:
     def __init__(self,best_feature=None,threshold=None,n_samples=None,left=None,node_rss=None,right=None,mean_value=None,*,value=None):
         self.best_feature = best_feature
@@ -20,8 +21,13 @@ class DecisionTreeRegressor:
         self.max_depth = max_depth # max splits in this case 2^100 leaf nodes
         self.min_samples_split = min_samples_split # minimum samples per leaf node
     
-    def fit(self,X,y):
+    def fit(self,X,y,prune=True):
+        X = np.array(X)
+        y = np.array(y)
         self.root = self._build_tree(X,y,depth=0)
+        if prune:
+            alpha = self.find_best_alpha(X,y)
+            self._prune_with_alpha(self.root,alpha)
 
     def _build_tree(self,X,y,depth):
         n_samples = X.shape[0]
@@ -64,7 +70,8 @@ class DecisionTreeRegressor:
         return best_feat,best_t
     
     def predict(self,X_new):
-        return np.array([self._traverse(x) for x in X_new] )
+        X_new_arr = np.array(X_new, dtype=float)
+        return np.array([self._traverse(x) for x in X_new_arr] )
     def _traverse(self,x):
         node = self.root
         while not node.is_leaf_node():
@@ -172,6 +179,15 @@ class DecisionTreeRegressor:
                 best_alpha = alpha
         
         return best_alpha
+    
+    def score(self,X_new,y_true):
+        predictions = self.predict(X_new)
+        mse = mean_squared_error(y_true,predictions)
+        mae = mean_absolute_error(y_true,predictions)
+        rmse = root_mean_squared_error(y_true,predictions)
+        r2 = r2_score(y_true,predictions)
+        return {"MSE":mse,"MAE":mae,"RMSE":rmse,"R2":r2}
+
 
 
 
