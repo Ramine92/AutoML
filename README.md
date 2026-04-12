@@ -3,8 +3,8 @@ title: AutoML From Scratch
 emoji: 🤖
 colorFrom: blue
 colorTo: purple
-sdk: docker        ← this is the critical one
-app_port: 7860     ← for Docker spaces, use this instead of app_file
+sdk: docker  
+app_port: 7860     
 pinned: false
 ---
 **AutoML from Scratch** is an end-to-end machine learning pipeline that automates the full workflow:
