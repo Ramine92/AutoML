@@ -8,6 +8,7 @@ MODELS_DIR = BASE_DIR / "ml" / "data" / "artifacts"
 UPLOAD_DIR = BASE_DIR / "ml" / "data" / "uploaded"
 async def save_path(file: UploadFile):
     path = f"{UPLOAD_DIR}/{file.filename}"
+    UPLOAD_DIR.mkdir(parents=True,exist_ok=True)
     with open(path,"wb") as f:
         content = await file.read()
         f.write(content)
@@ -16,6 +17,7 @@ async def save_path(file: UploadFile):
 def start_run(path: str,target_column: str):
     auto_ml = AutoMLPipeline(target_column=target_column)
     auto_ml.run(file_path=path)
+    MODELS_DIR.mkdir(parents=True,exist_ok=True)
     model_path = MODELS_DIR / f"{auto_ml.best_model_name_}.pkl"
     preprocessor_path = MODELS_DIR / "preprocessor.pkl"
     joblib.dump(auto_ml.best_model_,model_path)
