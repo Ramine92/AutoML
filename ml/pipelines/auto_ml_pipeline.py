@@ -67,6 +67,9 @@ class AutoMLPipeline:
             for CLASSMODELS in CLASSIFICATION_MODELS:
                 with mlflow.start_run(run_name=CLASSMODELS.__name__):
                         fold_acc_score = 0
+                        fold_precision_score = 0
+                        fold_f1score_score = 0
+                        fold_recall_score = 0
                         for fold,(train_idx,val_idx) in enumerate(k_fold.split(X)):
                                 X_train = X.iloc[train_idx]
                                 y_train = y.iloc[train_idx]
@@ -82,15 +85,23 @@ class AutoMLPipeline:
                                 model.fit(X_train_clean,y_train)
                                 tmp_score = model.score(X_val_clean,y_val)
                                 fold_acc_score += tmp_score["acc"]
+                                fold_recall_score += tmp_score["recall"]
+                                fold_f1score_score += tmp_score["f1_score"]
+                                fold_precision_score += tmp_score["precision"]
                                 
                         avg_fold_acc_score = fold_acc_score/5
-                        
-                        if avg_fold_acc_score > best_overall_score:
+                        avg_fold_precision_score = fold_precision_score/5
+                        avg_fold_recall_score = fold_recall_score /5
+                        avg_fold_f1_score = fold_f1score_score /5
+                        if avg_fold_f1_score > best_overall_score:
                                 best_model_class = CLASSMODELS
-                                best_overall_score = avg_fold_acc_score
+                                best_overall_score = avg_fold_f1_score
                                 
-                        self.metrics_[CLASSMODELS.__name__] = {"acc":avg_fold_acc_score}
+                        self.metrics_[CLASSMODELS.__name__] = {"acc":avg_fold_acc_score,"precision":avg_fold_precision_score,"recall":avg_fold_recall_score,"f1_score":avg_fold_f1_score}
                         mlflow.log_metric("cv_accuracy",avg_fold_acc_score)
+                        mlflow.log_metric("cv_precision",avg_fold_precision_score)
+                        mlflow.log_metric("cv_recall",avg_fold_recall_score)
+                        mlflow.log_metric("cv_f1score",avg_fold_f1_score)
                         
         # Retrain best model on ALL data
         self.best_model_name_ = best_model_class.__name__

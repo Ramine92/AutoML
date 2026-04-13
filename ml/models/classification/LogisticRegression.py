@@ -1,5 +1,5 @@
 import numpy as np
-from ml.evaluation.metrics import accuracy
+from ml.evaluation.metrics import accuracy,f1_score,recall,precision
 class LogisticRegression:
 
     def __init__(self,iterations=1000,alpha=0.01):
@@ -49,7 +49,10 @@ class LogisticRegression:
     def score(self,X_new,y_true):
         predictions = self.predict(X_new)
         acc = accuracy(y_true,predictions)
-        return {"acc":acc}
+        prec = precision(y_true,predictions)
+        rec = recall(y_true,predictions)
+        f1 = f1_score(y_true,predictions)
+        return {"acc":acc,"precision":prec,"recall":rec,"f1_score":f1}
 
 
 
