@@ -1,6 +1,8 @@
 import pandas as pd
 from ml.data.data_manager import DataManager
 from ml.preprocessing.preprocessor import Preprocessor 
+import time
+import numpy as np
 from sklearn.model_selection import KFold,cross_val_score
 from ml.models.registry import REGRESSION_MODELS,CLASSIFICATION_MODELS
 import mlflow
@@ -19,6 +21,17 @@ class AutoMLPipeline:
         df,num_cols,cat_cols,isclassification = data_manager.load_and_profile(file_path=file_path)
         X,y = data_manager.get_split()
         k_fold = KFold(n_splits=5,shuffle=True,random_state=42)
+
+        # Sample large datasets for CV — retrain best model on full data after
+        MAX_CV_SAMPLES = 5_000
+        if len(X) > MAX_CV_SAMPLES:
+            print(f"Large dataset ({len(X)} rows): sampling {MAX_CV_SAMPLES} rows for CV")
+            sample_idx = np.random.choice(len(X), MAX_CV_SAMPLES, replace=False)
+            X_cv = X.iloc[sample_idx].reset_index(drop=True)
+            y_cv = y.iloc[sample_idx].reset_index(drop=True)
+        else:
+            X_cv = X
+            y_cv = y
         
         best_overall_score = -float("inf")
         best_model_class = None
@@ -30,19 +43,22 @@ class AutoMLPipeline:
                         fold_mse_score = 0
                         fold_mae_score = 0
                         fold_rmse_score = 0
-                        for fold,(train_idx,val_idx) in enumerate(k_fold.split(X)):
-                            X_train = X.iloc[train_idx]
-                            y_train = y.iloc[train_idx]
-                            X_val = X.iloc[val_idx]
-                            y_val = y.iloc[val_idx]
+                        for fold,(train_idx,val_idx) in enumerate(k_fold.split(X_cv)):
+                            X_train = X_cv.iloc[train_idx]
+                            y_train = y_cv.iloc[train_idx]
+                            X_val = X_cv.iloc[val_idx]
+                            y_val = y_cv.iloc[val_idx]
                             
                             #preprocessing data
                             preprocessor = Preprocessor(cat_cols,num_cols)
+                            t0 = time.time()
                             X_train_clean = preprocessor.fit_transform(X_train)
                             X_val_clean = preprocessor.transform(X_val)
-                            
+                            print(f"Preprocessing : {time.time()-t0:.2f}s")
                             model = CLASSMODELS()
+                            t0 = time.time()
                             model.fit(X_train_clean,y_train)
+                            print(f"Training : {time.time()-t0:.2f}s")
                             tmpscore = model.score(X_val_clean,y_val)
                             fold_r2_score += tmpscore["R2"]
                             fold_mse_score += tmpscore["MSE"]
@@ -70,11 +86,11 @@ class AutoMLPipeline:
                         fold_precision_score = 0
                         fold_f1score_score = 0
                         fold_recall_score = 0
-                        for fold,(train_idx,val_idx) in enumerate(k_fold.split(X)):
-                                X_train = X.iloc[train_idx]
-                                y_train = y.iloc[train_idx]
-                                X_val = X.iloc[val_idx]
-                                y_val = y.iloc[val_idx]
+                        for fold,(train_idx,val_idx) in enumerate(k_fold.split(X_cv)):
+                                X_train = X_cv.iloc[train_idx]
+                                y_train = y_cv.iloc[train_idx]
+                                X_val = X_cv.iloc[val_idx]
+                                y_val = y_cv.iloc[val_idx]
                                 
                                 #preprocessing data
                                 preprocessor = Preprocessor(cat_cols,num_cols)
@@ -103,12 +119,23 @@ class AutoMLPipeline:
                         mlflow.log_metric("cv_recall",avg_fold_recall_score)
                         mlflow.log_metric("cv_f1score",avg_fold_f1_score)
                         
-        # Retrain best model on ALL data
+        # Retrain best model on ALL data (capped to avoid OOM on large datasets)
+        MAX_RETRAIN_SAMPLES = 10_000
+        if len(X) > MAX_RETRAIN_SAMPLES:
+            print(f"Large dataset: capping final retrain to {MAX_RETRAIN_SAMPLES} rows")
+            retrain_idx = np.random.choice(len(X), MAX_RETRAIN_SAMPLES, replace=False)
+            X_retrain = X.iloc[retrain_idx].reset_index(drop=True)
+            y_retrain = y.iloc[retrain_idx].reset_index(drop=True)
+        else:
+            X_retrain = X
+            y_retrain = y
+
         self.best_model_name_ = best_model_class.__name__
         self.preprocessor_ = Preprocessor(cat_cols,num_cols)
-        X_clean = self.preprocessor_.fit_transform(X)
+        X_clean = self.preprocessor_.fit_transform(X_retrain)
         self.best_model_ = best_model_class()
-        self.best_model_.fit(X_clean, y)
+        self.best_model_.fit(X_clean, y_retrain)
+
 
     def predict(self,X_new):
         return self.best_model_.predict(X_new)

@@ -17,11 +17,11 @@ class Node:
 
 
 class DecisionTreeRegressor:
-    def __init__(self,max_depth=100,min_samples_split=2):
-        self.max_depth = max_depth # max splits in this case 2^100 leaf nodes
+    def __init__(self,max_depth=10,min_samples_split=10):
+        self.max_depth = max_depth # max splits in this case 2^10 leaf nodes
         self.min_samples_split = min_samples_split # minimum samples per leaf node
     
-    def fit(self,X,y,prune=True):
+    def fit(self,X,y,prune=False):
         X = np.array(X)
         y = np.array(y)
         self.root = self._build_tree(X,y,depth=0)
@@ -52,6 +52,8 @@ class DecisionTreeRegressor:
         n_features = X.shape[1]
         for j in range(n_features):
             column_values = np.unique(X[:,j])
+            if len(column_values) > 50:
+                column_values = np.random.choice(column_values,50,replace=False)
             for t in column_values:
                 left_group = X[:,j] <= t
                 right_group = X[:,j] > t

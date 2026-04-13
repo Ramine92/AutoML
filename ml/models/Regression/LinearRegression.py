@@ -33,7 +33,7 @@ class LinearRegression:
         self.n = X.shape[1] # columns
         X_arr = np.array(X, dtype=float)
         self.X = np.c_[np.ones((self.m, 1)), X_arr]
-        self.y = np.ravel(y)
+        self.y = np.ravel(y).reshape(-1, 1)  # (m, 1) to match theta shape
         self.theta = np.random.randn(self.n+1,1)
         for _ in range(self.iterations):
             prediction = np.dot(self.X,self.theta)

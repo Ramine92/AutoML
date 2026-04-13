@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import requests
 import json
+import time
+import plotly.express as px
 st.title("Test AutoML")
 st.header("Upload CSV")
 uploaded_file = st.file_uploader("Choose a CSV file",type="csv")
@@ -22,30 +24,36 @@ target_column = st.text_input("Enter target column Name")
 if uploaded_file is not None and target_column:
     if st.button("Run AutoML"):
         try:
-            response = requests.post("http://localhost:8000/run",files={"file":uploaded_file},data={"target_column":target_column})
+            response = requests.post("http://localhost:8000/run",files={"file":uploaded_file},data={"target_column":target_column},timeout=30)
             result = response.json()
-            if response.status_code != 200:
-                st.error(f"API error {response.status_code}: {response.text}")
-            else:
-                st.success(f"Best model: {result['best_model']}")
-                best_model_name = result['best_model']
-                #data persistance using st.session_state
-                st.session_state.trained = True
-                st.session_state.best_model_name = result['best_model']
-                metrics_data = []
-                for model in result["results"]:
+            job_id = response.json()["job_id"]
+            with st.spinner("Training models...."):
+                while True:
+                    status_resp = requests.get(f"http://localhost:8000/status/{job_id}").json()
+                    if status_resp["status"] == "done":
+                        result = status_resp
+                        break
+                    elif status_resp["status"] == "failed":
+                        st.error(f"Failed:{status_resp['error']}")
+                        break
+                    time.sleep(5)  # poll every 5 seconds
+            st.success(f"Best model: {result['best_model']}")
+            best_model_name = result['best_model']
+            #data persistance using st.session_state
+            st.session_state.trained = True
+            st.session_state.best_model_name = result['best_model']
+            metrics_data = []
+            for model in result["results"]:
                     row = {"Model":model["model"]}
                     row.update(model["metrics"])
                     metrics_data.append(row)
                     
-                df_metrics = pd.DataFrame(metrics_data)    
-                if not df_metrics.empty:
-                    if "acc" in df_metrics.columns:
-                        st.bar_chart(data=df_metrics, x="Model", y="acc", width=400, use_container_width=False)
-                    elif "R2" in df_metrics.columns:
-                        st.bar_chart(data=df_metrics, x="Model", y="R2", width=400, use_container_width=False)
-                st.write("Raw Metrics")
-                st.dataframe(df_metrics)
+            df_metrics = pd.DataFrame(metrics_data)    
+            df_melted = df_metrics.melt(id_vars="Model",var_name="Metric",value_name="Score")
+            fig = px.bar(df_melted,x="Model",y="Score",color="Metric",barmode="group",title="Model Comparison",range_y=[0,1],text_auto=".2f")
+            st.plotly_chart(fig,use_container_width=True)
+            st.write("Raw Metrics")
+            st.dataframe(df_metrics)
 
         except Exception as e:
             st.error(f"Pipeline failed: {e}")
