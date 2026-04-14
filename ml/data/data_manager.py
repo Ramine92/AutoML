@@ -15,6 +15,10 @@ class DataManager:
         if not Path(file_path).exists():
             raise Exception("couldn't find the data passed.")
         self.df = pd.read_csv(file_path)
+        # Drop unnamed index columns (artifact from df.to_csv() without index=False)
+        unnamed_cols = [c for c in self.df.columns if c.startswith("Unnamed")]
+        if unnamed_cols:
+            self.df.drop(columns=unnamed_cols, inplace=True)
 
         self.numerical_cols = [c for c in self.df.select_dtypes(exclude="object").columns if c != self.target_column]
         self.categorical_cols = [c for c in self.df.select_dtypes(include="object").columns if c != self.target_column]
