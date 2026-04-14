@@ -1,7 +1,6 @@
-from fastapi import APIRouter,UploadFile,Form,BackgroundTasks
-from app.api.schemas import ModelResult,RunResponse
+from fastapi import APIRouter, UploadFile, Form, BackgroundTasks
 from app.services import predictor
-import asyncio
+import uuid
 
 router = APIRouter()
 jobs = {}
@@ -15,7 +14,6 @@ The pipeline will:
 4. **Return** metrics for each model and the best one
 """)
 async def run(file: UploadFile,target_column: str= Form(...),background_tasks: BackgroundTasks = None):
-   import uuid
    job_id = str(uuid.uuid4())
    path = await predictor.save_path(file)
    jobs[job_id] = {"status":"running","result":None}
