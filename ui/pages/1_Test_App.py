@@ -10,7 +10,6 @@ uploaded_file = st.file_uploader("Choose a CSV file",type="csv")
 if uploaded_file is not None:
     st.subheader("Data Preview")
     df_preview = pd.read_csv(uploaded_file)
-    df_preview.reset_index(drop=True,inplace=True)
     st.dataframe(df_preview.head())
     uploaded_file.seek(0)
 
